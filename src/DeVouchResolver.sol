@@ -3,28 +3,35 @@ pragma solidity ^0.8.19;
 
 import {SchemaResolver} from "eas-contracts/contracts/resolver/SchemaResolver.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract AttesterResolver is SchemaResolver, Ownable {
-    address private _targetAttester;
+contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
+    uint256 public _targetValue;
+    event Attest(address attester);
+    event Revoke(address attester);
 
-    constructor(IEAS eas, address targetAttester) SchemaResolver(eas) Ownable() {
-        _targetAttester = targetAttester;
+    constructor(IEAS eas, uint256 targetValue) SchemaResolver(eas) {
+        _targetValue = targetValue;
     }
-    /// @dev Returns true if the attestation is from the target attester, only the target attester can make attestations
+
+    function isPayable() public pure override returns (bool) {
+        return true;
+    }
 
     function onAttest(Attestation calldata attestation, uint256 /*value*/ ) internal view override returns (bool) {
-        return attestation.attester == _targetAttester;
+        emit Attest(attestation.attester);
+        return value == _targetValue;
     }
 
     /// @dev Attestation is revokable
     function onRevoke(Attestation calldata, /*attestation*/ uint256 /*value*/ ) internal pure override returns (bool) {
+        emit Revoke(attestation.attester);
         return true;
     }
 
-    /// @dev Sets the target attester
-    /// @param targetAttester The address of the target attester
-    function setTargetAttester(address targetAttester) public onlyOwner {
-        _targetAttester = targetAttester;
+    function setFee(uint256 targetValue) public onlyOwner {
+        _targetValue = targetValue;
     }
+
+   
 }
