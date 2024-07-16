@@ -1,16 +1,16 @@
-// SPDX-License Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {SchemaResolver} from "eas-contracts/contracts/resolver/SchemaResolver.sol";
+import {SchemaResolver} from "./SchemaResolverUpgradeable.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
-import "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
-    uint256 public _targetValue;
+contract DeVouchResolver is SchemaResolver {
+    uint256 private _targetValue;
     event Attest(address attester);
     event Revoke(address attester);
 
-    constructor(IEAS eas, uint256 targetValue) SchemaResolver(eas) {
+    function initialize(IEAS eas, uint256 targetValue) public initializer {
+        __SchemaResolver_init(eas); // Initialize the base contract
         _targetValue = targetValue;
     }
 
@@ -23,8 +23,7 @@ contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
         return value == _targetValue;
     }
 
-    /// @dev Attestation is revokable
-    function onRevoke(Attestation calldata attestation, /*attestation*/ uint256 /*value*/ ) internal override returns (bool) {
+    function onRevoke(Attestation calldata attestation, uint256 /*value*/) internal override returns (bool) {
         emit Revoke(attestation.attester);
         return true;
     }
@@ -32,6 +31,4 @@ contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
     function setFee(uint256 targetValue) public onlyOwner {
         _targetValue = targetValue;
     }
-
-   
 }
