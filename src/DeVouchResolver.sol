@@ -3,14 +3,15 @@ pragma solidity ^0.8.19;
 
 import {SchemaResolver} from "eas-contracts/contracts/resolver/SchemaResolver.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
-import "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin-contracts/access/Ownable.sol";
 
-contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
+contract DeVouchResolver is SchemaResolver, Ownable {
     uint256 public _targetValue;
+
     event Attest(address attester);
     event Revoke(address attester);
 
-    constructor(IEAS eas, uint256 targetValue) SchemaResolver(eas) {
+    constructor(IEAS eas, uint256 targetValue) SchemaResolver(eas) Ownable(msg.sender) {
         _targetValue = targetValue;
     }
 
@@ -24,7 +25,11 @@ contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
     }
 
     /// @dev Attestation is revokable
-    function onRevoke(Attestation calldata attestation, /*attestation*/ uint256 /*value*/ ) internal override returns (bool) {
+    function onRevoke(Attestation calldata attestation, /*attestation*/ uint256 /*value*/ )
+        internal
+        override
+        returns (bool)
+    {
         emit Revoke(attestation.attester);
         return true;
     }
@@ -32,6 +37,4 @@ contract DeVouchResolver is SchemaResolver, OwnableUpgradeable {
     function setFee(uint256 targetValue) public onlyOwner {
         _targetValue = targetValue;
     }
-
-   
 }

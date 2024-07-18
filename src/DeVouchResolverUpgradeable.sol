@@ -6,13 +6,14 @@ import "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {SchemaResolverUpgradable} from "./SchemaResolverUpgradeable.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
 
-contract DeVouchResolver is Initializable, SchemaResolverUpgradable {
+contract DeVouchResolverUpgradable is Initializable, SchemaResolverUpgradable, OwnableUpgradeable {
     uint256 private _targetValue;
 
     event Attest(address attester);
     event Revoke(address attester);
 
     function initialize(IEAS eas, uint256 targetValue) public initializer {
+        __Ownable_init(_msgSender());
         __SchemaResolver_init(eas); // Initialize the base contract
         _targetValue = targetValue;
     }

@@ -16,8 +16,8 @@ contract TestSetup is Test {
     string schema = "string projectSource, string projectId, bool vouch, string comment";
     EAS easContract;
     IEAS easInterface;
-    DeVouchResolver devouchResolver;
-    DeVouchResolver devouchResolverImplementation;
+    DeVouchResolverUpgradable devouchResolver;
+    DeVouchResolverUpgradable devouchResolverImplementation;
     TransparentUpgradeableProxy devouchResolverProxy;
     ProxyAdmin proxyAdmin;
     bytes32 schemaUID;
@@ -30,14 +30,14 @@ contract TestSetup is Test {
         schemaRegistry = new SchemaRegistry();
         easContract = new EAS(ISchemaRegistry(address(schemaRegistry)));
         schemaUID = schemaRegistry.register(schema, ISchemaResolver(address(devouchResolver)), true);
-        devouchResolverImplementation = new DeVouchResolver();
+        devouchResolverImplementation = new DeVouchResolverUpgradable();
         proxyAdmin = ProxyAdmin(address(8));
         devouchResolverProxy = new TransparentUpgradeableProxy(
             address(devouchResolverImplementation),
             address(proxyAdmin),
             abi.encodeWithSignature("initialize(address,uint256)", address(easContract), 0)
         );
-        devouchResolver = DeVouchResolver(payable(address(devouchResolverProxy)));
+        devouchResolver = DeVouchResolverUpgradable(payable(address(devouchResolverProxy)));
 
         vm.label(address(easContract), "EAS");
         vm.label(address(schemaRegistry), "SchemaRegistry");

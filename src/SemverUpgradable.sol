@@ -11,13 +11,13 @@ import {ISemver} from "eas-contracts/contracts/ISemver.sol";
 
 contract SemverUpgradable is ISemver, Initializable {
     // Contract's major version number.
-    uint256 private immutable _major;
+    uint256 private _major;
 
     // Contract's minor version number.
-    uint256 private immutable _minor;
+    uint256 private _minor;
 
     // Contract's patch version number.
-    uint256 private immutable _patch;
+    uint256 private _patch;
 
     /// @dev Create a new Semver instance.
     /// @param major Major version number.
