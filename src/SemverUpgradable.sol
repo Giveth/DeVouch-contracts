@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin-contracts/utils/Strings.sol";
 
 import {ISemver} from "eas-contracts/contracts/ISemver.sol";
 /// @title Semver
