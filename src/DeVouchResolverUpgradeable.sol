@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {SchemaResolverUpgradable} from "./SchemaResolverUpgradeable.sol";
+import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {SchemaResolverUpgradeable} from "./SchemaResolverUpgradeable.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
 
-contract DeVouchResolverUpgradable is Initializable, SchemaResolverUpgradable, OwnableUpgradeable {
+contract DeVouchResolverUpgradeable is Initializable, SchemaResolverUpgradeable, OwnableUpgradeable {
     uint256 private _targetValue;
 
     event Attest(address attester);

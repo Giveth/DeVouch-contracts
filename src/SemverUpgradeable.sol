@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {Strings} from "@openzeppelin-contracts/utils/Strings.sol";
 
 import {ISemver} from "eas-contracts/contracts/ISemver.sol";
 /// @title Semver
 /// @notice A simple contract for managing contract versions.
 
-contract SemverUpgradable is ISemver, Initializable {
+contract SemverUpgradeable is ISemver, Initializable {
     // Contract's major version number.
     uint256 private _major;
 

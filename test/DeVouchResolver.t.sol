@@ -1,14 +1,16 @@
 // SPDX License Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "forge-std/Test.sol";
-// import "ds-test/test.sol";
-import "eas-contracts/contracts/SchemaRegistry.sol";
-import "eas-contracts/contracts/EAS.sol";
-import "eas-contracts/contracts/IEAS.sol";
-import "src/DeVouchResolverUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {Test} from "forge-std/Test.sol";
+import {SchemaRegistry, ISchemaRegistry, ISchemaResolver} from "eas-contracts/contracts/SchemaRegistry.sol";
+import {EAS, NO_EXPIRATION_TIME, EMPTY_UID} from "eas-contracts/contracts/EAS.sol";
+import {IEAS, AttestationRequestData, AttestationRequest} from "eas-contracts/contracts/IEAS.sol";
+import {DeVouchResolverUpgradeable} from "src/DeVouchResolverUpgradeable.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin-contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ProxyAdmin} from "@openzeppelin-contracts/proxy/transparent/ProxyAdmin.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+
+import {DevouchResolverUpgradableMockV2} from "./DevouchResolverUpgradableMockV2.sol";
 
 contract TestSetup is Test {
     // eas contracts
@@ -16,9 +18,9 @@ contract TestSetup is Test {
     string schema = "string projectSource, string projectId, bool vouch, string comment";
     EAS easContract;
     IEAS easInterface;
-    DeVouchResolverUpgradable devouchResolver;
-    DeVouchResolverUpgradable devouchResolverImplementation;
-    TransparentUpgradeableProxy devouchResolverProxy;
+    DeVouchResolverUpgradeable devouchResolver;
+    address devouchResolverImplementation;
+    // TransparentUpgradeableProxy devouchResolverProxy;
     ProxyAdmin proxyAdmin;
     bytes32 schemaUID;
 
@@ -31,28 +33,28 @@ contract TestSetup is Test {
         // setup EAS
         schemaRegistry = new SchemaRegistry();
         easContract = new EAS(ISchemaRegistry(address(schemaRegistry)));
-        schemaUID = schemaRegistry.register(schema, ISchemaResolver(address(devouchResolver)), true);
-        devouchResolverImplementation = new DeVouchResolverUpgradable();
-        proxyAdmin = new ProxyAdmin(owner);
-        devouchResolverProxy = new TransparentUpgradeableProxy(
-            address(devouchResolverImplementation),
-            address(proxyAdmin),
-            abi.encodeWithSignature("initialize(address,uint256)", address(easContract), 0.1 ether)
+
+        address proxy = Upgrades.deployTransparentProxy(
+            "DeVouchResolverUpgradeable.sol:DeVouchResolverUpgradeable",
+            owner,
+            abi.encodeCall(DeVouchResolverUpgradeable.initialize, (easContract, 0.1 ether))
         );
-        devouchResolver = DeVouchResolverUpgradable(payable(address(devouchResolverProxy)));
+        devouchResolver = DeVouchResolverUpgradeable(payable(proxy));
+        devouchResolverImplementation = Upgrades.getImplementationAddress(proxy);
+        schemaUID = schemaRegistry.register(schema, ISchemaResolver(address(devouchResolver)), true);
 
         vm.label(address(easContract), "EAS");
         vm.label(address(schemaRegistry), "SchemaRegistry");
         vm.label(address(devouchResolver), "DeVouchResolver");
-        vm.label(address(devouchResolverImplementation), "DeVouchResolverImplementation");
-        vm.label(address(devouchResolverProxy), "DeVouchResolverProxy");
         vm.label(address(proxyAdmin), "ProxyAdmin");
     }
 
     function testAttest() public {
         // attest
 
-        bytes32 uid = easContract.attest(
+        vm.expectEmit(true, true, false, false);
+        emit IEAS.Attested(address(0), address(this), 0, schemaUID);
+        bytes32 uid = easContract.attest{value: 0.1 ether}(
             AttestationRequest({
                 schema: schemaUID,
                 data: AttestationRequestData({
@@ -62,23 +64,20 @@ contract TestSetup is Test {
                     refUID: EMPTY_UID,
                     data: abi.encode("giveth", "55", true, "this is awesome"),
                     //  "string projectSource, string projectId, bool vouch, string comment";
-                    value: 0
+                    value: 0.1 ether
                 })
             })
         );
-        emit Attest(msg.sender);
+
+        assertTrue(uid != bytes32(0), "Value should not be zero");
     }
 
     function testUpgrade() public {
-        // deploy new implementation
-        DeVouchResolverUpgradable newDeVouchResolverImplementation = new DeVouchResolverUpgradable();
-        // call upgrade from owner address of proxy admin
-        vm.prank(owner);
-        // address of proxy used + new imeplentation + empty call data (but should we use initialize again?)
-        proxyAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(address(devouchResolverProxy)),
-            address(newDeVouchResolverImplementation),
-            ""
+        vm.startPrank(owner);
+        Upgrades.upgradeProxy(
+            address(devouchResolver),
+            "DevouchResolverUpgradableMockV2.sol",
+            abi.encodeCall(DevouchResolverUpgradableMockV2.foo, ())
         );
     }
 }
