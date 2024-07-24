@@ -23,6 +23,7 @@ contract DeVouchResolverUpgradable is Initializable, SchemaResolverUpgradable, O
     }
 
     function onAttest(Attestation calldata attestation, uint256 value) internal override returns (bool) {
+        require(value == _targetValue, "DeVouchResolver: Value does not match target value");
         emit Attest(attestation.attester);
         return value == _targetValue;
     }

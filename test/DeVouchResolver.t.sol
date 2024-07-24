@@ -25,17 +25,19 @@ contract TestSetup is Test {
     event Attest(address attester);
     event Revoke(address attester);
 
+    address owner = address(4);
+
     function setUp() public virtual {
         // setup EAS
         schemaRegistry = new SchemaRegistry();
         easContract = new EAS(ISchemaRegistry(address(schemaRegistry)));
         schemaUID = schemaRegistry.register(schema, ISchemaResolver(address(devouchResolver)), true);
         devouchResolverImplementation = new DeVouchResolverUpgradable();
-        proxyAdmin = ProxyAdmin(address(8));
+        proxyAdmin = new ProxyAdmin(owner);
         devouchResolverProxy = new TransparentUpgradeableProxy(
             address(devouchResolverImplementation),
             address(proxyAdmin),
-            abi.encodeWithSignature("initialize(address,uint256)", address(easContract), 0)
+            abi.encodeWithSignature("initialize(address,uint256)", address(easContract), 0.1 ether)
         );
         devouchResolver = DeVouchResolverUpgradable(payable(address(devouchResolverProxy)));
 
@@ -45,5 +47,35 @@ contract TestSetup is Test {
         vm.label(address(devouchResolverImplementation), "DeVouchResolverImplementation");
         vm.label(address(devouchResolverProxy), "DeVouchResolverProxy");
         vm.label(address(proxyAdmin), "ProxyAdmin");
+    }
+
+    function testAttest() public {
+        // attest
+
+        bytes32 uid = easContract.attest(
+            AttestationRequest({
+                schema: schemaUID,
+                data: AttestationRequestData({
+                    recipient: address(0),
+                    expirationTime: NO_EXPIRATION_TIME,
+                    revocable: true,
+                    refUID: EMPTY_UID,
+                    data: abi.encode("giveth", "55", true, "this is awesome"),
+                    //  "string projectSource, string projectId, bool vouch, string comment";
+                    value: 0
+                })
+            })
+        );
+        emit Attest(msg.sender);
+    }
+
+    function testUpgrade() public {
+        DeVouchResolverUpgradable newDeVouchResolverImplementation = new DeVouchResolverUpgradable();
+        vm.prank(owner);
+        proxyAdmin.upgradeAndCall(
+            ITransparentUpgradeableProxy(address(devouchResolverProxy)),
+            address(newDeVouchResolverImplementation),
+            ""
+        );
     }
 }
