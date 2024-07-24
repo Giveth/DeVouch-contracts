@@ -69,7 +69,7 @@ contract TestSetup is Test {
             })
         );
 
-        assertTrue(uid != bytes32(0), "Value should not be zero");
+        assertNotEq(uid, bytes32(0));
     }
 
     function testUpgrade() public {
@@ -79,5 +79,8 @@ contract TestSetup is Test {
             "DevouchResolverUpgradableMockV2.sol",
             abi.encodeCall(DevouchResolverUpgradableMockV2.foo, ())
         );
+
+        address newImplementation = Upgrades.getImplementationAddress(address(devouchResolver));
+        assertNotEq(newImplementation, devouchResolverImplementation);
     }
 }
