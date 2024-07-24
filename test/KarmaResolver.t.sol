@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import "eas-contracts/contracts/SchemaRegistry.sol";
 import "eas-contracts/contracts/EAS.sol";
 import "eas-contracts/contracts/IEAS.sol";
-import "src/DeVouchResolverUpgradeable.sol";
+import "src/KarmaProjectResolverUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
@@ -16,9 +16,9 @@ contract TestSetup is Test {
     string schema = "string projectSource, string projectId, bool vouch, string comment";
     EAS easContract;
     IEAS easInterface;
-    DeVouchResolverUpgradable devouchResolver;
-    DeVouchResolverUpgradable devouchResolverImplementation;
-    TransparentUpgradeableProxy devouchResolverProxy;
+    ProjectResolver KarmaResolver;
+    ProjectResolver KarmaResolverImplementation;
+    TransparentUpgradeableProxy KarmaResolverProxy;
     ProxyAdmin proxyAdmin;
     bytes32 schemaUID;
 
@@ -31,21 +31,21 @@ contract TestSetup is Test {
         // setup EAS
         schemaRegistry = new SchemaRegistry();
         easContract = new EAS(ISchemaRegistry(address(schemaRegistry)));
-        schemaUID = schemaRegistry.register(schema, ISchemaResolver(address(devouchResolver)), true);
-        devouchResolverImplementation = new DeVouchResolverUpgradable();
+        schemaUID = schemaRegistry.register(schema, ISchemaResolver(address(KarmaResolver)), true);
+        KarmaResolverImplementation = new ProjectResolver(easContract);
         proxyAdmin = new ProxyAdmin(owner);
-        devouchResolverProxy = new TransparentUpgradeableProxy(
-            address(devouchResolverImplementation),
+        KarmaResolverProxy = new TransparentUpgradeableProxy(
+            address(KarmaResolverImplementation),
             address(proxyAdmin),
             abi.encodeWithSignature("initialize(address,uint256)", address(easContract), 0.1 ether)
         );
-        devouchResolver = DeVouchResolverUpgradable(payable(address(devouchResolverProxy)));
+        KarmaResolver = ProjectResolver(payable(address(KarmaResolverProxy)));
 
         vm.label(address(easContract), "EAS");
         vm.label(address(schemaRegistry), "SchemaRegistry");
-        vm.label(address(devouchResolver), "DeVouchResolver");
-        vm.label(address(devouchResolverImplementation), "DeVouchResolverImplementation");
-        vm.label(address(devouchResolverProxy), "DeVouchResolverProxy");
+        vm.label(address(KarmaResolver), "KarmaResolver");
+        vm.label(address(KarmaResolverImplementation), "KarmaResolverImplementation");
+        vm.label(address(KarmaResolverProxy), "KarmaResolverProxy");
         vm.label(address(proxyAdmin), "ProxyAdmin");
     }
 
@@ -70,14 +70,11 @@ contract TestSetup is Test {
     }
 
     function testUpgrade() public {
-        // deploy new implementation
-        DeVouchResolverUpgradable newDeVouchResolverImplementation = new DeVouchResolverUpgradable();
-        // call upgrade from owner address of proxy admin
+        ProjectResolver newKarmaResolverImplementation = new ProjectResolver(easContract);
         vm.prank(owner);
-        // address of proxy used + new imeplentation + empty call data (but should we use initialize again?)
         proxyAdmin.upgradeAndCall(
-            ITransparentUpgradeableProxy(address(devouchResolverProxy)),
-            address(newDeVouchResolverImplementation),
+            ITransparentUpgradeableProxy(address(KarmaResolverProxy)),
+            address(newKarmaResolverImplementation),
             ""
         );
     }
