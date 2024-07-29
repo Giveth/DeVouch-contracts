@@ -9,9 +9,6 @@ import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
 contract DeVouchResolverUpgradeable is Initializable, SchemaResolverUpgradeable, OwnableUpgradeable {
     uint256 private _targetValue;
 
-    event Attest(address attester);
-    event Revoke(address attester);
-
     function initialize(IEAS eas, uint256 targetValue) public initializer {
         __Ownable_init(_msgSender());
         __SchemaResolver_init(eas); // Initialize the base contract
@@ -24,12 +21,10 @@ contract DeVouchResolverUpgradeable is Initializable, SchemaResolverUpgradeable,
 
     function onAttest(Attestation calldata attestation, uint256 value) internal override returns (bool) {
         require(value == _targetValue, "DeVouchResolver: Value does not match target value");
-        emit Attest(attestation.attester);
         return value == _targetValue;
     }
 
     function onRevoke(Attestation calldata attestation, uint256 /*value*/ ) internal override returns (bool) {
-        emit Revoke(attestation.attester);
         return true;
     }
 
