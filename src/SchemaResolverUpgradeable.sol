@@ -2,24 +2,29 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
 import {AccessDenied, InvalidEAS, InvalidLength, uncheckedInc} from "eas-contracts/contracts/Common.sol";
-import {SemverUpgradable} from "./SemverUpgradable.sol";
+import {SemverUpgradeable} from "./SemverUpgradeable.sol";
 import {ISchemaResolver} from "eas-contracts/contracts/resolver/ISchemaResolver.sol";
 
-/// @title SchemaResolverUpgradable
+/// @title SchemaResolverUpgradeable
 /// @notice The base schema resolver contract.
-abstract contract SchemaResolverUpgradable is ISchemaResolver, Initializable, SemverUpgradable {
+abstract contract SchemaResolverUpgradeable is ISchemaResolver, Initializable, SemverUpgradeable {
     error InsufficientValue();
     error NotPayable();
 
     // The global EAS contract.
     IEAS internal _eas;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @dev Initializes the contract with the given version numbers.
     /// @param eas The address of the global EAS contract.
-    function __SchemaResolver_init(IEAS eas) internal initializer {
+    function __SchemaResolver_init(IEAS eas) internal onlyInitializing {
         __Semver_init(1, 3, 0);
         if (address(eas) == address(0)) {
             revert InvalidEAS();

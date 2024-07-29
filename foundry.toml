@@ -3,11 +3,16 @@ solc-version = "0.8.26"
 evm-version = "cancun"
 src = "src"
 out = "out"
+ast = true
+ffi = true
+build_info = true
+extra_output = ["storageLayout"]
 libs = ["lib"]
 # remappings = [
-    # "eas-contracts/=lib/eas-contracts/",
-    # "@openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-    # "@openzeppelin-contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+#     "eas-contracts/=lib/eas-contracts/",
+#     "@openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+#     "@openzeppelin-contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+#     "forge-std/=lib/forge-std/src/"
 # ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

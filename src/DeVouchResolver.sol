@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {SchemaResolver} from "eas-contracts/contracts/resolver/SchemaResolver.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
-import "@openzeppelin-contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin-contracts/access/Ownable.sol";
 
 contract DeVouchResolver is SchemaResolver, Ownable {
     uint256 public _targetValue;
