@@ -6,6 +6,7 @@ import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable/access/Own
 import {SchemaResolverUpgradeable} from "./SchemaResolverUpgradeable.sol";
 import {IEAS, Attestation} from "eas-contracts/contracts/IEAS.sol";
 
+/// @custom:oz-upgrades-from DeVouchResolverUpgradeable
 contract DeVouchResolverUpgradeable is Initializable, SchemaResolverUpgradeable, OwnableUpgradeable {
     uint256 private _targetValue;
 
@@ -20,15 +21,18 @@ contract DeVouchResolverUpgradeable is Initializable, SchemaResolverUpgradeable,
     }
 
     function onAttest(Attestation calldata attestation, uint256 value) internal override returns (bool) {
-        require(value == _targetValue, "DeVouchResolver: Value does not match target value");
-        return value == _targetValue;
-    }
+        return true;
+        }
 
-    function onRevoke(Attestation calldata attestation, uint256 /*value*/ ) internal override returns (bool) {
+    function onRevoke(Attestation calldata attestation, uint256 value ) internal override returns (bool) {
         return true;
     }
 
     function setFee(uint256 targetValue) public onlyOwner {
         _targetValue = targetValue;
+    }
+
+    function withdraw() public onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }
 }
