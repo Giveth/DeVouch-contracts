@@ -74,11 +74,7 @@ contract TestSetup is Test {
 
     function testUpgrade() public {
         vm.startPrank(owner);
-        Upgrades.upgradeProxy(
-            address(devouchResolver),
-            "DevouchResolverUpgradableMockV2.sol",
-            abi.encodeCall(DevouchResolverUpgradableMockV2.foo, ())
-        );
+        Upgrades.upgradeProxy(address(devouchResolver), "DevouchResolverUpgradableMockV2.sol", "");
 
         address newImplementation = Upgrades.getImplementationAddress(address(devouchResolver));
         assertNotEq(newImplementation, devouchResolverImplementation);

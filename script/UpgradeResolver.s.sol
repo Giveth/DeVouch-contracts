@@ -10,13 +10,12 @@ contract UpgradeResolverScript is Script {
     function setUp() public {}
 
     function run() public {
-        EAS easContract = EAS(vm.envAddress("EAS_CONTRACT"));
-        address owner = vm.envAddress("OWNER_ADDRESS");
         address proxy = vm.envAddress("PROXY_ADDRESS");
+        console.log("Proxy: %s", proxy);
 
         vm.startBroadcast();
 
-        Upgrades.upgradeProxy(proxy, "DeVouchResolverUpgradeable.sol:DeVouchResolverUpgradeable", "");
+        Upgrades.upgradeProxy(proxy, "DeVouchResolverUpgradeableV2.sol", "");
 
         console.log("Resolver: %s", proxy);
         console.log("Implementation: %s", Upgrades.getImplementationAddress(proxy));
