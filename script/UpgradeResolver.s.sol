@@ -6,20 +6,16 @@ import {EAS} from "eas-contracts/contracts/EAS.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {DeVouchResolverUpgradeable} from "src/DeVouchResolverUpgradeable.sol";
 
-contract ResolverScript is Script {
+contract UpgradeResolverScript is Script {
     function setUp() public {}
 
     function run() public {
-        EAS easContract = EAS(vm.envAddress("EAS_CONTRACT"));
-        address owner = vm.envAddress("OWNER_ADDRESS");
+        address proxy = vm.envAddress("PROXY_ADDRESS");
+        console.log("Proxy: %s", proxy);
 
         vm.startBroadcast();
 
-        address proxy = Upgrades.deployTransparentProxy(
-            "DeVouchResolverUpgradeableV2.sol",
-            owner,
-            abi.encodeCall(DeVouchResolverUpgradeable.initialize, (easContract, 0 ether))
-        );
+        Upgrades.upgradeProxy(proxy, "DeVouchResolverUpgradeableV2.sol", "");
 
         console.log("Resolver: %s", proxy);
         console.log("Implementation: %s", Upgrades.getImplementationAddress(proxy));
