@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.26;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Vm} from "forge-std/Vm.sol";
@@ -19,6 +19,7 @@ contract DevouchAttesterTest is Test {
 
     address owner;
     address user = address(2);
+    address multisig;
 
     event Attested(bytes32 indexed uid, bytes32 indexed schema, address indexed recipient);
 
@@ -34,9 +35,12 @@ contract DevouchAttesterTest is Test {
         
         devouchAttester.updateSchema(schemaUID);
 
+        multisig = devouchAttester.multisig();
+
         vm.label(address(easContract), "EAS");
         vm.label(address(schemaRegistry), "SchemaRegistry");
         vm.label(address(devouchAttester), "DeVouchAttester");
+        vm.label(multisig, "Multisig");
     }
 
     function testMultiAttest() public {
@@ -46,34 +50,69 @@ contract DevouchAttesterTest is Test {
         refUIDArray[1] = EMPTY_UID;
         bytes memory data = abi.encode("giveth", "55", true, "this is awesome");
 
-        uint256 initialBalance = address(devouchAttester).balance;
         uint256 fee = devouchAttester.fee();
-
+        
         vm.deal(user, 1 ether);
+
+        uint256 userInitialBalance = user.balance;
+        uint256 contractInitialBalance = address(devouchAttester).balance;
+        uint256 multisigInitialBalance = multisig.balance;
+
+        console.log("\n--------------------");
+        console.log("Starting Multi-Attest Test");
+        console.log("--------------------");
+        console.log("Attestation fee:", fee);
+        console.log("User initial balance:", userInitialBalance);
+        console.log("Contract initial balance:", contractInitialBalance);
+        console.log("Multisig initial balance:", multisigInitialBalance);
+
         vm.prank(user);
-
-        console.log("Before attestation");
-
         vm.recordLogs();
-
         devouchAttester.attest{value: fee}(recipient, refUIDArray, data);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
-        console.log("After attestation");
-        console.log("Number of emitted events:", entries.length);
+        uint256 userFinalBalance = user.balance;
+        uint256 contractFinalBalance = address(devouchAttester).balance;
+        uint256 multisigFinalBalance = multisig.balance;
 
-        for (uint i = 0; i < entries.length; i++) {
-            console.log("Event", i);
-            console.logBytes32(entries[i].topics[0]); // Event signature
-            if (entries[i].topics.length > 1) console.logBytes32(entries[i].topics[1]); // First indexed parameter
-            if (entries[i].topics.length > 2) console.logBytes32(entries[i].topics[2]); // Second indexed parameter
-            if (entries[i].topics.length > 3) console.logAddress(address(uint160(uint256(entries[i].topics[3])))); // Third indexed parameter (if it's an address)
-            console.logBytes(entries[i].data); // Non-indexed parameters
+        console.log("\n--------------------");
+        console.log("Attestation Complete");
+        console.log("--------------------");
+        console.log("Number of emitted events:", entries.length);
+        console.log("User final balance:", userFinalBalance);
+        console.log("Contract final balance:", contractFinalBalance);
+        console.log("Multisig final balance:", multisigFinalBalance);
+
+        console.log("\n--------------------");
+        console.log("Assertions");
+        console.log("--------------------");
+
+        assertEq(entries.length, 2, "Should emit two events for multi-attest");
+        console.log(" >> Correct number of events emitted");
+
+        assertEq(userFinalBalance, userInitialBalance - fee, "User balance should decrease by fee amount");
+        console.log(" >> User balance decreased correctly");
+
+        if (contractFinalBalance > contractInitialBalance) {
+            assertEq(contractFinalBalance, contractInitialBalance + fee, "Contract balance should increase by fee amount");
+            console.log(" >> Fee is held in the contract");
+        } else if (multisigFinalBalance > multisigInitialBalance) {
+            assertEq(multisigFinalBalance, multisigInitialBalance + fee, "Multisig balance should increase by fee amount");
+            console.log(" >> Fee was sent to the multisig");
+        } else {
+            fail();
+            console.log(" >> Fee was not properly accounted for");
         }
 
-        assertEq(address(devouchAttester).balance, initialBalance + fee);
-        assertEq(devouchAttester.schema(), schemaUID);
-        assertEq(address(devouchAttester.eas()), address(easContract));
+        assertEq(devouchAttester.schema(), schemaUID, "Schema in DevouchAttester should match the set schema");
+        console.log(" >> Schema in DevouchAttester is correct");
+
+        assertEq(address(devouchAttester.eas()), address(easContract), "EAS address in DevouchAttester should be correct");
+        console.log(" >> EAS address in DevouchAttester is correct");
+
+        console.log("\n--------------------");
+        console.log("Test Complete");
+        console.log("--------------------");
     }
 }
