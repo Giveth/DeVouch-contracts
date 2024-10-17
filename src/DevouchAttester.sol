@@ -23,8 +23,11 @@ contract DeVouchAttester {
     error ContractPaused();
     error WithdrawFailed();
 
+    /**
+    * @dev Set contract deployer as owner
+    */
     constructor(address _easAddress) {
-        owner = msg.sender;
+        owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
         eas = IEAS(_easAddress);
     }
 
@@ -93,6 +96,7 @@ contract DeVouchAttester {
 
     fallback() external payable {}
 
+    // Function to withdraw Ether from the contract (for testing purposes)
     function withdraw() public ownerOnly {
         uint256 amount = address(this).balance;
         (bool success, ) = multisig.call{value: amount}("");
