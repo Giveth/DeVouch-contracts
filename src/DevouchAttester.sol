@@ -11,7 +11,7 @@ import { NO_EXPIRATION_TIME } from "eas-contracts/contracts/Common.sol";
 contract DeVouchAttester {
     address public owner;
     uint256 public fee = 0.00003 ether;
-    address public constant multisig = 0x7D52A0Ab02A6A49a1B4b7c4e79C80F977971f700;
+    address public multisig;
     bytes32 public schema = 0x421da38e6ff5eb5d0402a4e9be70e70f961bce228e8a20d1eca19634556247fd;
 
     IEAS public eas;
@@ -22,12 +22,14 @@ contract DeVouchAttester {
     error InvalidSchema();
     error ContractPaused();
     error WithdrawFailed();
+    error InvalidMultisig(); 
 
     /**
-    * @dev Set contract deployer as owner
+    * @dev Set contract deployer as owner and initial multisig
     */
     constructor(address _easAddress) {
-        owner = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
+        owner = msg.sender;
+        multisig = 0x7D52A0Ab02A6A49a1B4b7c4e79C80F977971f700;
         eas = IEAS(_easAddress);
     }
 
@@ -43,6 +45,11 @@ contract DeVouchAttester {
 
     function updateOwner(address newOwner) public ownerOnly {
         owner = newOwner;
+    }
+
+    function updateMultisig(address newMultisig) public ownerOnly {
+        if (newMultisig == address(0)) revert InvalidMultisig();
+        multisig = newMultisig;
     }
 
     function updateFee(uint256 newFee) public ownerOnly {
@@ -96,8 +103,7 @@ contract DeVouchAttester {
 
     fallback() external payable {}
 
-    // Function to withdraw Ether from the contract (for testing purposes)
-    function withdraw() public ownerOnly {
+    function withdraw() public {
         uint256 amount = address(this).balance;
         (bool success, ) = multisig.call{value: amount}("");
         if (!success) revert WithdrawFailed();
