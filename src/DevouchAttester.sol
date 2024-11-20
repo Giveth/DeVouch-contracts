@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
 
-import { IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
-import { NO_EXPIRATION_TIME, EMPTY_UID } from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
+import { IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData } from "eas-contracts/contracts/IEAS.sol";
+import { NO_EXPIRATION_TIME, EMPTY_UID } from "eas-contracts/contracts/Common.sol";
 
 contract DevouchAttester
 {

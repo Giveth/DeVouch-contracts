@@ -6,8 +6,8 @@ import {SchemaRegistry, ISchemaRegistry, ISchemaResolver} from "eas-contracts/co
 import {EAS, NO_EXPIRATION_TIME, EMPTY_UID} from "eas-contracts/contracts/EAS.sol";
 import {IEAS, AttestationRequestData, AttestationRequest} from "eas-contracts/contracts/IEAS.sol";
 import {DeVouchResolverUpgradeable} from "src/DeVouchResolverUpgradeable.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin-contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {ProxyAdmin} from "@openzeppelin-contracts/proxy/transparent/ProxyAdmin.sol";
+// import {TransparentUpgradeableProxy} from "@openzeppelin-contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+// import {ProxyAdmin} from "@openzeppelin-contracts/proxy/transparent/ProxyAdmin.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 import {DevouchResolverUpgradableMockV2} from "./DevouchResolverUpgradableMockV2.sol";
@@ -21,11 +21,13 @@ contract TestSetup is Test {
     DeVouchResolverUpgradeable devouchResolver;
     address devouchResolverImplementation;
     // TransparentUpgradeableProxy devouchResolverProxy;
-    ProxyAdmin proxyAdmin;
+    // ProxyAdmin proxyAdmin;
     bytes32 schemaUID;
 
     event Attest(address attester);
     event Revoke(address attester);
+
+    uint256 fee = 0.0001 ether;
 
     address owner = address(4);
 
@@ -37,7 +39,7 @@ contract TestSetup is Test {
         address proxy = Upgrades.deployTransparentProxy(
             "DeVouchResolverUpgradeable.sol:DeVouchResolverUpgradeable",
             owner,
-            abi.encodeCall(DeVouchResolverUpgradeable.initialize, (easContract, 0.1 ether))
+            abi.encodeCall(DeVouchResolverUpgradeable.initialize, (easContract, fee))
         );
         devouchResolver = DeVouchResolverUpgradeable(payable(proxy));
         devouchResolverImplementation = Upgrades.getImplementationAddress(proxy);
@@ -46,7 +48,7 @@ contract TestSetup is Test {
         vm.label(address(easContract), "EAS");
         vm.label(address(schemaRegistry), "SchemaRegistry");
         vm.label(address(devouchResolver), "DeVouchResolver");
-        vm.label(address(proxyAdmin), "ProxyAdmin");
+        // vm.label(address(proxyAdmin), "ProxyAdmin");
     }
 
     function testAttest() public {
@@ -54,7 +56,7 @@ contract TestSetup is Test {
 
         vm.expectEmit(true, true, false, false);
         emit IEAS.Attested(address(0), address(this), 0, schemaUID);
-        bytes32 uid = easContract.attest{value: 0.1 ether}(
+        bytes32 uid = easContract.attest{value: fee}(
             AttestationRequest({
                 schema: schemaUID,
                 data: AttestationRequestData({
@@ -64,7 +66,7 @@ contract TestSetup is Test {
                     refUID: EMPTY_UID,
                     data: abi.encode("giveth", "55", true, "this is awesome"),
                     //  "string projectSource, string projectId, bool vouch, string comment";
-                    value: 0.1 ether
+                    value: fee
                 })
             })
         );
@@ -74,7 +76,7 @@ contract TestSetup is Test {
 
     function testUpgrade() public {
         vm.startPrank(owner);
-        Upgrades.upgradeProxy(address(devouchResolver), "DevouchResolverUpgradableMockV2.sol", "");
+        Upgrades.upgradeProxy(address(devouchResolver), "DevouchResolverUpgradableMockV2.sol:DevouchResolverUpgradableMockV2", "");
 
         address newImplementation = Upgrades.getImplementationAddress(address(devouchResolver));
         assertNotEq(newImplementation, devouchResolverImplementation);

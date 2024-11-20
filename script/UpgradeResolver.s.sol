@@ -15,7 +15,7 @@ contract UpgradeResolverScript is Script {
 
         vm.startBroadcast();
 
-        Upgrades.upgradeProxy(proxy, "DeVouchResolverUpgradeableV2.sol", "");
+        Upgrades.upgradeProxy(proxy, "DeVouchResolverUpgradeable", "");
 
         console.log("Resolver: %s", proxy);
         console.log("Implementation: %s", Upgrades.getImplementationAddress(proxy));

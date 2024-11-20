@@ -16,9 +16,9 @@ contract ResolverScript is Script {
         vm.startBroadcast();
 
         address proxy = Upgrades.deployTransparentProxy(
-            "DeVouchResolverUpgradeableV2.sol",
+            "DeVouchResolverUpgradeable.sol",
             owner,
-            abi.encodeCall(DeVouchResolverUpgradeable.initialize, (easContract, 0 ether))
+            abi.encodeCall(DeVouchResolverUpgradeable.initialize, (easContract, 0.0001 ether))
         );
 
         console.log("Resolver: %s", proxy);
